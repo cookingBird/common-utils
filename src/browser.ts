@@ -91,31 +91,60 @@ export const Base64Util = {
 };
 
 export function injectScriptFile(url: string) {
-  if (!url || document.getElementById(url)) return;
-  document.addEventListener('DOMContentLoaded', function () {
-    // 创建 script 元素
-    const scriptElement = document.createElement('script');
-    scriptElement.src = url;
-    scriptElement.setAttribute('id', url);
-    // 将 script 元素添加到页面的 head 或 body 元素中
-    document.head.appendChild(scriptElement);
-    // 或 document.body.appendChild(scriptElement);
-  });
+  if (!url) return Promise.reject();
+  return addJssdkScript(url)
 }
 
 export function injectCSSFile(url: string) {
-  if (!url || document.getElementById(url)) return;
-  document.addEventListener('DOMContentLoaded', function () {
-    // 创建 link 元素
-    const linkElement = document.createElement('link');
-    linkElement.rel = 'stylesheet';
-    linkElement.type = 'text/css';
-    linkElement.href = url;
-    linkElement.setAttribute('id', url);
-    // 将 link 元素添加到页面的 head 元素中
-    document.head.appendChild(linkElement);
-  });
+  if (!url) return Promise.reject();
+  return addCssStyleLink(url)
 }
+
+export function addJssdkScript(jssdk: string) {
+  return new Promise<HTMLScriptElement>((resolve, reject) => {
+    let script = document.getElementById(jssdk) as HTMLScriptElement;
+    if (!script) {
+      script = document.createElement('script')
+      const head = document.head || document.getElementsByTagName('head')[0]
+      script.type = 'text/javascript'
+      script.src = jssdk
+      script.id = jssdk
+      head.insertBefore(script, head.firstChild)
+    }
+    script.onload = function () {
+      console.log('jssdk successful')
+      resolve(script)
+    }
+    script.onerror = function () {
+      console.log('jssdk load failure')
+      reject()
+    }
+  })
+}
+export function addCssStyleLink(url: string) {
+  return new Promise<HTMLLinkElement>((resolve, reject) => {
+    let linkElement = document.getElementById(url) as HTMLLinkElement;
+    if (!linkElement) {
+      // 创建 link 元素
+      linkElement = document.createElement('link');
+      const head = document.head || document.getElementsByTagName('head')[0]
+      linkElement.rel = 'stylesheet';
+      linkElement.type = 'text/css';
+      linkElement.href = url;
+      linkElement.id = url;
+      head.insertBefore(linkElement, head.firstChild)
+    }
+    linkElement.onload = function () {
+      console.log('stylesheet load successful')
+      resolve(linkElement)
+    }
+    linkElement.onerror = function () {
+      console.log('stylesheet load failure')
+      reject()
+    }
+  })
+}
+
 
 export function downloadBase64(base64data: string, width: number, height: number) {
   const image = new Image();
